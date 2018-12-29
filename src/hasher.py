@@ -9,6 +9,5 @@ class Hasher():
             while chunk != b'':
                 chunk = file.read(4094)
                 self.hash.update(chunk)
-        # self.hash.update(bytes)
         return self.hash.hexdigest()
 

@@ -1,6 +1,6 @@
-import hasher
 import os
+from  backupFolder import Backupfolder
 
-hash = hasher.Hasher()
+bc = Backupfolder()
 dirname = os.path.dirname(__file__)
-print(hash.findhash(os.path.join(dirname, './temp/1.txt')))
+bc.backup(os.path.join(dirname, './temp'))
