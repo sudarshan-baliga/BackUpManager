@@ -1,5 +1,6 @@
 from hasher import Hasher
 import os
+import shutil
 import pymysql
 
 class Backupfolder():
@@ -14,16 +15,31 @@ class Backupfolder():
                 absFile = os.path.join(directory , file)
                 if os.path.isfile(absFile):
                     self.files.append(absFile)
+    
+
+    def copyfile(self, filepath):
+        try:
+            path, file = os.path.split(filepath)
+            os.makedirs(os.path.join("backup", path), exist_ok=True)
+            shutil.copy2(filepath, os.path.join("backup", filepath)) 
+            return True
+        except:
+            print("could not copy {} into backup folder".format(filepath))
+        return False
+
+    def createsymlink(self, src, dest):
+        pass
 
     def backup(self, fullpath):
         """Backup everthing present in the path."""
-        db = pymysql.connect("localhost", "sudarshan", "12345", "backup")
-        cursor = db.cursor() 
+        hasher = Hasher()
+        try:
+            db = pymysql.connect("localhost", "sudarshan", "12345", "backup")
+            cursor = db.cursor() 
+        except:
+            print("Could not connect to the database")
         self.listnesteddir(fullpath)
         for file in self.files:
-            # hasher will append the hashes so we need to create
-            # new object for every file
-            hasher = Hasher()
             hash = hasher.findhash(file)
             query = "SELECT * FROM hashes WHERE hash = \'{}\';".format(hash)
             try:
@@ -31,11 +47,14 @@ class Backupfolder():
             except:
                 print("not able to query database to check the hashes")
             if cursor.rowcount == 0:
-                try:
-                    query = "INSERT into hashes values(\'{}\',\'{}\')".format(hash, file)
-                    cursor.execute(query)
-                    db.commit()
-                except:
-                    db.rollback()
+                res = self.copyfile(file)
+                if(res):
+                    try:
+                        query = "INSERT into hashes values(\'{}\',\'{}\')".format(hash, file)
+                        cursor.execute(query)
+                        db.commit()                   
+                    except:
+                        db.rollback()
+                        print("could no insert {} into data base".format(file))
             else:
                 print(file , " already exists create symlink")
