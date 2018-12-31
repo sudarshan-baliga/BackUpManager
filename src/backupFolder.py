@@ -1,7 +1,7 @@
 from hasher import Hasher
 import os
 import shutil
-import pymysql
+import sqlite3
 
 
 class Backupfolder():
@@ -34,36 +34,52 @@ class Backupfolder():
             path, file = os.path.split(dest)
             os.makedirs(path, exist_ok=True)
             # src should be absolute path
-            print(file)
             os.symlink(src, dest)
         except Exception as e:
             print("could not create symlink", dest)
             print(e.__doc__)
 
+
+    def cleardb(self):
+        """Drop the hashes table from sqlite3 db."""
+        try:
+            db = sqlite3.connect("backup.db")
+            cursor = db.cursor()
+            query = "DROP table hashes"
+            cursor.execute(query)
+        except Exception as e:
+            print("coulld not drop table hashes", e.__doc__)
+
     def backup(self, fullpath):
         """Backup everthing present in the path."""
+        # self.cleardb()
         hasher = Hasher()
         try:
-            db = pymysql.connect("localhost", "sudarshan", "12345", "backup")
-            cursor = db.cursor() 
-        except:
-            print("Could not connect to the database")
+            db = sqlite3.connect('backup.db')
+            cursor = db.cursor()
+            createtable = "CREATE TABLE IF NOT EXISTS hashes(hash TEXT PRIMART KEY NOT NULL, dir TEXT NOT NULL)"
+            cursor.execute(createtable)
+            db.commit()
+        except Exception as e: 
+            db.rollback()
+            print("Could not create or connect to the database", e.__doc__)
         self.listnesteddir(fullpath)
         for file in self.files:
             hash = hasher.findhash(file)
             query = "SELECT * FROM hashes WHERE hash = \'{}\';".format(hash)
             try:
                 cursor.execute(query)
-            except:
-                print("not able to query database to check the hashes")
-            if cursor.rowcount == 0:
+            except Exception as e:
+                print("not able to query database to check the hashes", e.__doc__)
+            identicalrow = cursor.fetchall()
+            if len(identicalrow) == 0:
                 res = self.copyfile(file)
                 if res:
                     try:
                         destpath = os.path.join(os.path.abspath("backup"), file)
                         query = "INSERT into hashes values(\'{}\',\'{}\')".format(hash, destpath)
                         cursor.execute(query)
-                        db.commit()                   
+                        db.commit()
                     except:
                         db.rollback()
                         print("could no insert {} into data base".format(file))
@@ -71,7 +87,6 @@ class Backupfolder():
                 if os.path.exists(os.path.join("backup", file)):
                     print("no changes made for", file)
                 else:
-                    srcdata = cursor.fetchone()
-                    src = srcdata[1]
+                    src = identicalrow[0][1]
                     dest = os.path.join("backup", file)
                     self.createsymlink(src, dest)
