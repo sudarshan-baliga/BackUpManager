@@ -2,6 +2,7 @@ from hasher import Hasher
 import os
 import shutil
 import sqlite3
+import logging
 
 
 class Backupfolder():
@@ -23,8 +24,9 @@ class Backupfolder():
             os.makedirs(os.path.join("backup", path), exist_ok=True)
             shutil.copy2(filepath, os.path.join("backup", filepath))
             return True
-        except:
+        except Exception as e:
             print("could not copy {} into backup folder".format(filepath))
+            logging.error(e)
         return False
 
     def createsymlink(self, src, dest):
@@ -36,8 +38,7 @@ class Backupfolder():
             # src should be absolute path
             os.symlink(src, dest)
         except Exception as e:
-            print("could not create symlink", dest)
-            print(e.__doc__)
+            logging.error(e)
 
 
     def cleardb(self):
@@ -48,11 +49,12 @@ class Backupfolder():
             query = "DROP table hashes"
             cursor.execute(query)
         except Exception as e:
-            print("coulld not drop table hashes", e.__doc__)
+            print("coulld not drop table hashes")
+            logging.error(e)
 
     def backup(self, fullpath):
         """Backup everthing present in the path."""
-        # self.cleardb()
+        self.cleardb()
         hasher = Hasher()
         try:
             db = sqlite3.connect('backup.db')
@@ -62,7 +64,8 @@ class Backupfolder():
             db.commit()
         except Exception as e: 
             db.rollback()
-            print("Could not create or connect to the database", e.__doc__)
+            print("Could not create or connect to the database")
+            logging.error(e)
         self.listnesteddir(fullpath)
         for file in self.files:
             hash = hasher.findhash(file)
@@ -80,9 +83,10 @@ class Backupfolder():
                         query = "INSERT into hashes values(\'{}\',\'{}\')".format(hash, destpath)
                         cursor.execute(query)
                         db.commit()
-                    except:
+                    except Exception as ee:
                         db.rollback()
                         print("could no insert {} into data base".format(file))
+                        logging.error(e)
             else:
                 if os.path.exists(os.path.join("backup", file)):
                     print("no changes made for", file)
