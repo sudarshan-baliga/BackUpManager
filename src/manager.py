@@ -1,23 +1,41 @@
 import os
-import ctypes, sys
-from  backupFolder import Backupfolder
+import ctypes
+import sys
+import subprocess
+from backupFolder import Backupfolder
+
 
 def is_admin():
-    '''to check if admin privilage is give'''
-    try:
-        return ctypes.windll.shell32.IsUserAnAdmin()
-    except:
-        return False
+    '''To check if admin(sudo) privilage is given.'''
+    if sys.platform == "linux":
+        try:
+            return os.getuid() == 0
+        except:
+            return False
+    else:
+        # for windows
+        try:
+            return ctypes.windll.shell32.IsUserAnAdmin()
+        except:
+            return False
 
-#check if admin permission is given
+def request_admin():
+    if sys.platform == "linux":
+        res = subprocess.call(["/usr/bin/sudo", "/usr/bin/id"])
+        print(res)
+    else:
+        res = ctypes.windll.shell32.ShellExecuteW( None, "runas", sys.executable, __file__, None, 1)
+    return res
+
+# check if admin permission is given
 admin = False
 if is_admin():
     admin = True
 else:
     # Re-run the program with admin rights
-    res = ctypes.windll.shell32.ShellExecuteW(None, "runas", sys.executable, __file__, None, 1)
+    res = request_admin()
     if res >= 32:
-       admin = True
+        admin = True
 
 if admin:
     bc = Backupfolder()
