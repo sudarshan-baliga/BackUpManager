@@ -19,6 +19,7 @@ class Backupfolder():
                     self.files.append(absFile)
 
     def copyfile(self, filepath):
+        """Copy file to backup folder."""
         try:
             path, file = os.path.split(filepath)
             os.makedirs(os.path.join("backup", path), exist_ok=True)
@@ -83,7 +84,7 @@ class Backupfolder():
                         query = "INSERT into hashes values(\'{}\',\'{}\')".format(hash, destpath)
                         cursor.execute(query)
                         db.commit()
-                    except Exception as ee:
+                    except Exception as e:
                         db.rollback()
                         print("could no insert {} into data base".format(file))
                         logging.error(e)
