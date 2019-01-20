@@ -22,9 +22,12 @@ def is_admin():
 def request_admin():
     if sys.platform == "linux":
         res = subprocess.call(["/usr/bin/sudo", "/usr/bin/id"])
-        print(res)
     else:
         res = ctypes.windll.shell32.ShellExecuteW( None, "runas", sys.executable, __file__, None, 1)
+        if res >= 32:
+            exit(0)
+        else:
+            res = False
     return res
 
 # check if admin permission is given
@@ -33,9 +36,7 @@ if is_admin():
     admin = True
 else:
     # Re-run the program with admin rights
-    res = request_admin()
-    if res >= 32:
-        admin = True
+    admin = request_admin()
 
 if admin:
     bc = Backupfolder()
