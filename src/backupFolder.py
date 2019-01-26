@@ -33,7 +33,7 @@ class Backupfolder():
         try:
             path, file = os.path.split(filepath)
             backuppath = self.joinpath("backup", path)
-            print(backuppath)
+            print("Creating:", backuppath)
             os.makedirs(backuppath, exist_ok=True)
             shutil.copy2(filepath, backuppath)
             return True
@@ -44,7 +44,7 @@ class Backupfolder():
 
     def createsymlink(self, src, dest):
         """create symlink of src pointing to dest."""
-        print(src, dest)
+        print("creating symlink for", dest)
         try:
             path, file = os.path.split(dest)
             os.makedirs(path, exist_ok=True)
@@ -68,7 +68,7 @@ class Backupfolder():
 
     def backup(self, fullpath):
         """Backup everthing present in the path."""
-        self.cleardb()
+        # self.cleardb()
         hasher = Hasher()
         try:
             db = sqlite3.connect('backup.db')
@@ -103,7 +103,7 @@ class Backupfolder():
                         logging.error(e)
             else:
                 if os.path.exists(self.joinpath("backup", file)):
-                    print("no changes made for", file)
+                    print("File already exists :", file)
                 else:
                     src = identicalrow[0][1]
                     dest = self.joinpath("backup", file)
