@@ -18,7 +18,6 @@ def is_admin():
         try:
             return ctypes.windll.shell32.IsUserAnAdmin()
         except:
-            print('nonono')
             return False
 
 
@@ -32,7 +31,7 @@ def request_admin():
             exit(0)
         else:
             res = False
-    return res
+    return True
 
 
 parser = argparse.ArgumentParser()

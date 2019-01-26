@@ -10,7 +10,7 @@ class Backupfolder():
         self.files = []
 
     def joinpath(self, path1, path2):
-        """Join path1 and path2 with workaround for abs path."""
+        """Join path1 and path2 with workaround for absolute path."""
         if path2[0] == "/":
             backuppath = os.path.join(path1, path2[1:])
         elif path2[1:4] == "://":
